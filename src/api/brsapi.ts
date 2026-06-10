@@ -34,7 +34,8 @@ export interface IranMarketData {
   lastUpdate: Date
 }
 
-const ENDPOINT = 'https://brsapi.ir/FreeTsetmcBourseApi/Api_Free_Gold_Currency_v2.json'
+const DIRECT = 'https://brsapi.ir/FreeTsetmcBourseApi/Api_Free_Gold_Currency_v2.json'
+const PROXY  = 'https://corsproxy.io/?url=' + encodeURIComponent(DIRECT)
 
 function find(items: BrsItem[], ...terms: string[]): number | null {
   const item = items.find(i =>
@@ -43,10 +44,21 @@ function find(items: BrsItem[], ...terms: string[]): number | null {
   return item ? item.price : null
 }
 
+async function fetchJson(): Promise<BrsResponse> {
+  // Try direct first (works for Iranian IPs with CORS); fall back to proxy
+  for (const url of [DIRECT, PROXY]) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+      if (res.ok) return res.json()
+    } catch {
+      // next
+    }
+  }
+  throw new Error('BRS API unreachable')
+}
+
 export async function fetchIranMarket(): Promise<IranMarketData> {
-  const res = await fetch(ENDPOINT, { signal: AbortSignal.timeout(10000) })
-  if (!res.ok) throw new Error(`BRS ${res.status}`)
-  const data: BrsResponse = await res.json()
+  const data = await fetchJson()
 
   const gold = data.gold ?? []
   const currency = data.currency ?? []
@@ -56,15 +68,15 @@ export async function fetchIranMarket(): Promise<IranMarketData> {
     eurToToman: find(currency, 'یورو', 'EUR'),
     gbpToToman: find(currency, 'پوند', 'GBP'),
     aedToToman: find(currency, 'درهم', 'AED'),
-    gold18PerGram: find(gold, '18 عیار', '۱۸ عیار', 'گرم طلای 18'),
-    gold24PerGram: find(gold, '24 عیار', '۲۴ عیار', 'گرم طلای 24'),
-    goldMeltedPerGram: find(gold, 'آب شده', 'مذاب'),
+    gold18PerGram: find(gold, '18 عیار', '۱۸ عیار', 'گرم طلای 18', 'طلا 18', 'geram18'),
+    gold24PerGram: find(gold, '24 عیار', '۲۴ عیار', 'گرم طلای 24', 'طلا 24', 'geram24'),
+    goldMeltedPerGram: find(gold, 'آب شده', 'مذاب', 'مذاب'),
     goldMithqal: find(gold, 'مثقال'),
-    sekkeTama: find(gold, 'بهار آزادی', 'تمام سکه', 'سکه تمام'),
-    sekkeNim: find(gold, 'نیم سکه'),
-    sekkeRob: find(gold, 'ربع سکه'),
-    sekkeGerami: find(gold, 'سکه گرمی', 'گرمی'),
-    sekkeEmami: find(gold, 'امامی'),
+    sekkeTama: find(gold, 'بهار آزادی', 'تمام سکه', 'سکه تمام', 'sekke', 'SEKKE_TAMA'),
+    sekkeNim: find(gold, 'نیم سکه', 'nim_sekke', 'SEKKE_NIM'),
+    sekkeRob: find(gold, 'ربع سکه', 'rob_sekke', 'SEKKE_ROB'),
+    sekkeGerami: find(gold, 'سکه گرمی', 'گرمی', 'gerami', 'SEKKE_GERAMI'),
+    sekkeEmami: find(gold, 'امامی', 'emami', 'SEKKE_EMAMI'),
     lastUpdate: new Date(),
   }
 }
