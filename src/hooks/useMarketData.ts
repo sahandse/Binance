@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { MarketData } from '../types'
 import { fetchBinancePrices } from '../api/binance'
-import { fetchKrakenMetals } from '../api/kraken'
-import { fetchFrankfurterRates } from '../api/frankfurter'
-import { fetchOpenExchangeRates } from '../api/openexchange'
+import { fetchFrankfurterRates, fetchMetals } from '../api/frankfurter'
+import { fetchExtraRates } from '../api/exchangerate'
 import { REFRESH_INTERVAL_MS } from '../constants/market'
 
 const initialState: MarketData = {
@@ -24,18 +23,18 @@ export function useMarketData() {
   const fetchAll = useCallback(async () => {
     const results = await Promise.allSettled([
       fetchBinancePrices(),
-      fetchKrakenMetals(),
+      fetchMetals(),
       fetchFrankfurterRates(),
-      fetchOpenExchangeRates(),
+      fetchExtraRates(),
     ])
 
     if (!isMountedRef.current) return
 
-    const [cryptoResult, metalResult, currencyResult, openErResult] = results
+    const [cryptoResult, metalResult, currencyResult, extraResult] = results
 
     const currencies = [
       ...(currencyResult.status === 'fulfilled' ? currencyResult.value : []),
-      ...(openErResult.status === 'fulfilled' ? openErResult.value : []),
+      ...(extraResult.status === 'fulfilled' ? extraResult.value : []),
     ]
 
     setData(prev => ({
