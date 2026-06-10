@@ -16,7 +16,7 @@ export async function fetchFrankfurterRates(): Promise<CurrencyRate[]> {
 
   const data: FrankfurterResponse = await res.json()
 
-  const currencies: CurrencyRate[] = FRANKFURTER_CURRENCIES
+  return FRANKFURTER_CURRENCIES
     .filter(code => data.rates[code] !== undefined)
     .map(code => {
       const meta = CURRENCY_META[code] ?? { nameFA: code, flag: '🏳' }
@@ -27,6 +27,4 @@ export async function fetchFrankfurterRates(): Promise<CurrencyRate[]> {
         rateToUSD: data.rates[code],
       }
     })
-
-  return currencies
 }

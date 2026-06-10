@@ -5,9 +5,10 @@ interface HeaderProps {
   lastUpdate: Date | null
   loading: boolean
   onRefresh: () => void
+  title?: string
 }
 
-export function Header({ lastUpdate, loading, onRefresh }: HeaderProps) {
+export function Header({ lastUpdate, loading, onRefresh, title = 'بازار زنده' }: HeaderProps) {
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export function Header({ lastUpdate, loading, onRefresh }: HeaderProps) {
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-2.5">
-          <span className="c-gold font-bold text-lg tracking-tight">بازار زنده</span>
+          <span className="c-gold font-bold text-lg tracking-tight">{title}</span>
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot" />
         </div>
 

@@ -3,6 +3,7 @@ import type { MarketData } from '../types'
 import { fetchBinancePrices } from '../api/binance'
 import { fetchKrakenMetals } from '../api/kraken'
 import { fetchFrankfurterRates } from '../api/frankfurter'
+import { fetchOpenExchangeRates } from '../api/openexchange'
 import { REFRESH_INTERVAL_MS } from '../constants/market'
 
 const initialState: MarketData = {
@@ -25,16 +26,22 @@ export function useMarketData() {
       fetchBinancePrices(),
       fetchKrakenMetals(),
       fetchFrankfurterRates(),
+      fetchOpenExchangeRates(),
     ])
 
     if (!isMountedRef.current) return
 
-    const [cryptoResult, metalResult, currencyResult] = results
+    const [cryptoResult, metalResult, currencyResult, openErResult] = results
+
+    const currencies = [
+      ...(currencyResult.status === 'fulfilled' ? currencyResult.value : []),
+      ...(openErResult.status === 'fulfilled' ? openErResult.value : []),
+    ]
 
     setData(prev => ({
       cryptos: cryptoResult.status === 'fulfilled' ? cryptoResult.value : prev.cryptos,
       metals: metalResult.status === 'fulfilled' ? metalResult.value : prev.metals,
-      currencies: currencyResult.status === 'fulfilled' ? currencyResult.value : prev.currencies,
+      currencies: currencies.length > 0 ? currencies : prev.currencies,
       lastUpdate: new Date(),
       loading: false,
       cryptoError: cryptoResult.status === 'rejected' ? 'خطا در دریافت قیمت رمزارزها' : null,

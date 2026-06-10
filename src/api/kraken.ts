@@ -34,7 +34,7 @@ export async function fetchKrakenMetals(): Promise<MetalPrice[]> {
     metals.push({
       symbol: isGold ? 'XAU' : 'XAG',
       nameFA: isGold ? 'طلا' : 'نقره',
-      unit: isGold ? 'هر اونس' : 'هر اونس',
+      unit: 'هر اونس',
       price: lastPrice,
       change24h,
       high24h: parseFloat(ticker.h[1]),
@@ -43,7 +43,6 @@ export async function fetchKrakenMetals(): Promise<MetalPrice[]> {
     })
   }
 
-  // Sort gold first
   return metals.sort((a) => (a.symbol === 'XAU' ? -1 : 1))
 }
 

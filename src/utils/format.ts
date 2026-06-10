@@ -38,6 +38,22 @@ export function formatToman(usdPrice: number, usdToToman: number): string {
   return toPersianDigits(FA.format(Math.round(toman)))
 }
 
+export function formatCompactToman(toman: number): string {
+  if (toman >= 1_000_000_000_000) {
+    return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 1 }).format(toman / 1_000_000_000_000)) + ' هزار میلیارد'
+  }
+  if (toman >= 1_000_000_000) {
+    return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(toman / 1_000_000_000)) + ' میلیارد'
+  }
+  if (toman >= 1_000_000) {
+    return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 1 }).format(toman / 1_000_000)) + ' میلیون'
+  }
+  if (toman >= 1_000) {
+    return toPersianDigits(FA.format(Math.round(toman / 1000))) + ' هزار'
+  }
+  return toPersianDigits(FA.format(Math.round(toman)))
+}
+
 export function formatChange(change: number): string {
   const abs = Math.abs(change)
   const fmt = toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(abs))
@@ -72,10 +88,19 @@ export function formatDate(date: Date): string {
 }
 
 export function formatCurrencyRate(rateToUSD: number): string {
-  // rateToUSD = how many of this currency per 1 USD
   const perOne = 1 / rateToUSD
   if (perOne >= 100) {
     return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(rateToUSD))
   }
   return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 4 }).format(rateToUSD))
+}
+
+export function formatMarketCap(cap: number): string {
+  if (cap >= 1_000_000_000_000) {
+    return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(cap / 1_000_000_000_000)) + ' تریلیون'
+  }
+  if (cap >= 1_000_000_000) {
+    return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 1 }).format(cap / 1_000_000_000)) + ' میلیارد'
+  }
+  return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(cap / 1_000_000)) + ' میلیون'
 }

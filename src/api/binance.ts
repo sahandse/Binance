@@ -1,4 +1,4 @@
-import type { CryptoPrice } from '../types'
+import type { CryptoPrice, KlineData } from '../types'
 import { BINANCE_SYMBOLS, COIN_META } from '../constants/market'
 
 interface BinanceTicker {
@@ -33,4 +33,26 @@ export async function fetchBinancePrices(): Promise<CryptoPrice[]> {
       icon: meta.icon,
     }
   }).sort((a, b) => b.volume24h - a.volume24h)
+}
+
+// Returns map of symbol -> array of closing prices (7-day daily klines)
+export async function fetchKlines(symbols: string[]): Promise<Record<string, KlineData>> {
+  const result: Record<string, KlineData> = {}
+
+  await Promise.allSettled(
+    symbols.map(async (sym) => {
+      try {
+        const url = `https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=7`
+        const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+        if (!res.ok) return
+        const data: [number, string, string, string, string, ...unknown[]][] = await res.json()
+        // Index 4 = close price
+        result[sym] = data.map(k => parseFloat(k[4]))
+      } catch {
+        // silently ignore per-symbol errors
+      }
+    })
+  )
+
+  return result
 }
