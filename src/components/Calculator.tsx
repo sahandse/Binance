@@ -8,139 +8,93 @@ interface CalculatorProps {
   metals: MetalPrice[]
 }
 
-type Asset = {
-  id: string
-  nameFA: string
-  symbol: string
-  priceUSD: number
-  icon: string
+type Asset = { id: string; nameFA: string; symbol: string; priceUSD: number; icon: string }
+
+function formatTomanResult(toman: number): string {
+  if (toman <= 0) return '۰'
+  if (toman >= 1e12) return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(toman / 1e12)) + ' هزار میلیارد تومان'
+  if (toman >= 1e9)  return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(toman / 1e9))  + ' میلیارد تومان'
+  if (toman >= 1e6)  return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(toman / 1e6))  + ' میلیون تومان'
+  if (toman >= 1e3)  return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(toman / 1e3))  + ' هزار تومان'
+  return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(toman)) + ' تومان'
 }
 
 export function Calculator({ usdToToman, cryptos, metals }: CalculatorProps) {
   const [amount, setAmount] = useState('')
-  const [selectedAsset, setSelectedAsset] = useState<string>('USD')
+  const [assetId, setAssetId] = useState('USD')
 
   const assets: Asset[] = [
     { id: 'USD', nameFA: 'دلار آمریکا', symbol: 'USD', priceUSD: 1, icon: '💵' },
-    ...cryptos.map(c => ({
-      id: c.symbol,
-      nameFA: c.nameFA,
-      symbol: c.symbol,
-      priceUSD: c.price,
-      icon: c.icon,
-    })),
-    ...metals.map(m => ({
-      id: m.symbol,
-      nameFA: m.nameFA + ' (اونس)',
-      symbol: m.symbol,
-      priceUSD: m.price,
-      icon: m.icon,
-    })),
-    ...metals.map(m => ({
-      id: m.symbol + '_GRAM',
-      nameFA: m.nameFA + ' (گرم)',
-      symbol: m.symbol + '/g',
-      priceUSD: m.price / 31.1035,
-      icon: m.icon,
-    })),
+    ...cryptos.map(c => ({ id: c.symbol, nameFA: c.nameFA, symbol: c.symbol, priceUSD: c.price, icon: c.icon })),
+    ...metals.flatMap(m => [
+      { id: m.symbol,          nameFA: `${m.nameFA} (اونس)`, symbol: m.symbol,       priceUSD: m.price,            icon: m.icon },
+      { id: m.symbol + '_GR',  nameFA: `${m.nameFA} (گرم)`,  symbol: m.symbol + '/g', priceUSD: m.price / 31.1035, icon: m.icon },
+    ]),
   ]
 
-  const chosen = assets.find(a => a.id === selectedAsset) ?? assets[0]
-  const numAmount = parseFloat(amount) || 0
-  const usdValue = numAmount * chosen.priceUSD
-  const tomanValue = usdValue * usdToToman
-
-  const presets = [1, 5, 10, 100, 1000]
-
-  const formatResult = (val: number): string => {
-    if (val === 0) return '۰'
-    if (val >= 1_000_000_000_000) {
-      return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(val / 1_000_000_000_000)) + ' هزار میلیارد'
-    }
-    if (val >= 1_000_000_000) {
-      return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(val / 1_000_000_000)) + ' میلیارد'
-    }
-    if (val >= 1_000_000) {
-      return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(val / 1_000_000)) + ' میلیون'
-    }
-    return toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(val))
-  }
+  const chosen = assets.find(a => a.id === assetId) ?? assets[0]
+  const num = parseFloat(amount) || 0
+  const usdVal = num * chosen.priceUSD
+  const tomanVal = usdVal * usdToToman
 
   return (
-    <div className="glass-card rounded-2xl p-5">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xl">
-          🧮
-        </div>
-        <div>
-          <h2 className="font-bold text-white text-lg">ماشین‌حساب تومان</h2>
-          <p className="text-slate-500 text-xs">تبدیل ارز و رمزارز به تومان</p>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-4">
-        {/* Input side */}
+    <div className="card">
+      <div className="grid sm:grid-cols-2 gap-4">
+        {/* Left – inputs */}
         <div className="space-y-3">
-          {/* Asset selector */}
           <div>
-            <label className="text-slate-400 text-sm mb-1 block">نوع دارایی</label>
+            <label className="text-xs c-dim block mb-1.5">نوع دارایی</label>
             <select
-              value={selectedAsset}
-              onChange={e => setSelectedAsset(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white text-base outline-none focus:border-purple-500/50 cursor-pointer"
-              dir="rtl"
+              value={assetId}
+              onChange={e => setAssetId(e.target.value)}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none appearance-none cursor-pointer"
+              style={{ background: '#0e0e11', border: '1px solid #1f1f24' }}
             >
-              <optgroup label="ارزهای فیات">
+              <optgroup label="فیات">
                 <option value="USD">💵 دلار آمریکا</option>
               </optgroup>
-              <optgroup label="رمزارزها">
+              <optgroup label="رمزارز">
                 {cryptos.map(c => (
-                  <option key={c.symbol} value={c.symbol}>
-                    {c.icon} {c.nameFA} ({c.symbol})
-                  </option>
+                  <option key={c.symbol} value={c.symbol}>{c.icon} {c.nameFA}</option>
                 ))}
               </optgroup>
-              <optgroup label="فلزات گرانبها">
+              <optgroup label="فلزات">
                 {metals.map(m => (
                   <Fragment key={m.symbol}>
-                    <option value={m.symbol}>
-                      {m.icon} {m.nameFA} - هر اونس
-                    </option>
-                    <option value={m.symbol + '_GRAM'}>
-                      {m.icon} {m.nameFA} - هر گرم
-                    </option>
+                    <option value={m.symbol}>{m.icon} {m.nameFA} — اونس</option>
+                    <option value={m.symbol + '_GR'}>{m.icon} {m.nameFA} — گرم</option>
                   </Fragment>
                 ))}
               </optgroup>
             </select>
           </div>
 
-          {/* Amount input */}
           <div>
-            <label className="text-slate-400 text-sm mb-1 block">مقدار</label>
+            <label className="text-xs c-dim block mb-1.5">مقدار</label>
             <div className="relative">
               <input
                 type="number"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
-                placeholder="مقدار را وارد کنید"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white text-base outline-none focus:border-purple-500/50"
-                dir="ltr"
+                placeholder="0"
+                className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                style={{ background: '#0e0e11', border: '1px solid #1f1f24' }}
                 min="0"
               />
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs c-muted pointer-events-none">
                 {chosen.symbol}
-              </div>
+              </span>
             </div>
           </div>
 
-          {/* Preset amounts */}
-          <div className="flex flex-wrap gap-2">
-            {presets.map(p => (
+          {/* Presets */}
+          <div className="flex flex-wrap gap-1.5">
+            {[1, 10, 100, 1000].map(p => (
               <button
                 key={p}
                 onClick={() => setAmount(String(p))}
-                className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-lg text-sm hover:bg-purple-500/20 transition-colors"
+                className="px-3 py-1 rounded-lg text-xs c-dim"
+                style={{ background: '#1a1a20', border: '1px solid #2a2a30' }}
               >
                 {toPersianDigits(p)}
               </button>
@@ -148,55 +102,38 @@ export function Calculator({ usdToToman, cryptos, metals }: CalculatorProps) {
           </div>
         </div>
 
-        {/* Result side */}
-        <div className="bg-black/30 rounded-xl p-4 flex flex-col justify-between">
-          <div>
-            <div className="text-slate-400 text-sm mb-2">نتیجه تبدیل</div>
-
-            {numAmount > 0 && (
-              <>
-                {/* USD value */}
-                <div className="mb-3 pb-3 border-b border-white/5">
-                  <div className="text-slate-400 text-xs mb-1">ارزش به دلار</div>
-                  <div className="text-white font-bold text-xl" dir="ltr">
-                    ${new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(usdValue)}
-                  </div>
+        {/* Right – result */}
+        <div
+          className="rounded-xl p-4 flex flex-col justify-center"
+          style={{ background: '#0e0e11', border: '1px solid #1a1a1f' }}
+        >
+          {num > 0 ? (
+            <div className="space-y-3">
+              <div>
+                <div className="text-xs c-muted mb-1">ارزش به دلار</div>
+                <div className="text-lg font-bold text-white tabular-nums" dir="ltr">
+                  ${new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(usdVal)}
                 </div>
-
-                {/* Toman value */}
-                <div>
-                  <div className="text-slate-400 text-xs mb-1">ارزش به تومان</div>
-                  <div className="text-amber-400 font-bold text-2xl">
-                    {formatResult(tomanValue)}
-                    <span className="text-amber-500 text-lg mr-1">تومان</span>
-                  </div>
-                  <div className="text-slate-500 text-xs mt-1">
-                    {toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(tomanValue))} تومان
-                  </div>
+              </div>
+              <div style={{ borderTop: '1px solid #1f1f24', paddingTop: '12px' }}>
+                <div className="text-xs c-muted mb-1">معادل تومانی</div>
+                <div className="text-xl font-bold c-gold">
+                  {formatTomanResult(tomanVal)}
                 </div>
-              </>
-            )}
-
-            {numAmount === 0 && (
-              <div className="text-slate-600 text-center py-4">
-                <div className="text-3xl mb-2">🧮</div>
-                <div>مقدار را وارد کنید</div>
+                <div className="text-xs c-muted mt-1">
+                  {toPersianDigits(new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(tomanVal))} تومان
+                </div>
               </div>
-            )}
-          </div>
-
-          {numAmount > 0 && (
-            <div className="mt-4 pt-3 border-t border-white/5">
-              <div className="flex justify-between text-xs text-slate-500">
-                <span>نرخ دلار:</span>
-                <span>{toPersianDigits(usdToToman.toLocaleString())} تومان</span>
-              </div>
-              {selectedAsset !== 'USD' && (
-                <div className="flex justify-between text-xs text-slate-500 mt-1">
-                  <span>قیمت {chosen.nameFA}:</span>
-                  <span dir="ltr">{formatUSD(chosen.priceUSD)}</span>
+              {assetId !== 'USD' && (
+                <div className="text-xs c-muted" style={{ borderTop: '1px solid #1f1f24', paddingTop: '8px' }}>
+                  قیمت {chosen.nameFA}: {formatUSD(chosen.priceUSD)}
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="text-center c-muted py-4">
+              <div className="text-2xl mb-1">🧮</div>
+              <div className="text-sm">مقدار را وارد کنید</div>
             </div>
           )}
         </div>

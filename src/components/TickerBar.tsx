@@ -7,21 +7,19 @@ interface TickerBarProps {
 
 export function TickerBar({ cryptos }: TickerBarProps) {
   if (cryptos.length === 0) return null
-
   const items = [...cryptos, ...cryptos]
 
   return (
-    <div className="bg-black/30 border-b border-white/5 py-2 overflow-hidden">
-      <div className="ticker-content flex gap-8 items-center">
+    <div className="ticker-wrap border-b py-2" style={{ background: '#0e0e11', borderColor: '#1a1a1f' }}>
+      <div className="ticker-track">
         {items.map((c, i) => (
-          <div key={i} className="flex items-center gap-2 shrink-0">
-            <span className="text-slate-400 font-medium text-sm">{c.symbol}</span>
-            <span className="text-white font-bold text-sm">{formatUSD(c.price)}</span>
-            <span className={`text-xs font-medium ${c.change24h >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+          <span key={i} className="inline-flex items-center gap-1.5 mx-6 text-xs">
+            <span className="c-dim font-medium">{c.symbol}</span>
+            <span className="text-white font-bold tabular-nums" dir="ltr">{formatUSD(c.price)}</span>
+            <span className={c.change24h >= 0 ? 'c-green' : 'c-red'}>
               {formatChange(c.change24h)}
             </span>
-            <span className="text-slate-600">·</span>
-          </div>
+          </span>
         ))}
       </div>
     </div>
