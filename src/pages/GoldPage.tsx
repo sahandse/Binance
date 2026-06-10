@@ -123,44 +123,42 @@ export function GoldPage() {
       )}
 
       {/* Gold Coins */}
-      {(goldPerGram > 0 || Object.values(coinPrices).some(v => v != null)) && (
-        <section>
-          <SectionHeader
-            title="سکه‌های طلا"
-            subtitle={liveUsd ? 'قیمت بازار · brsapi.ir' : 'ارزش ذاتی'}
-            icon="🪙"
-          />
-          <div className="price-grid">
-            {goldCoins.map(coin => (
-              <GoldCoinCard
-                key={coin.id}
-                coin={coin}
-                goldPerGramUSD={goldPerGram}
-                usdToToman={effectiveUsd}
-                marketPriceToman={coinPrices[coin.id]}
-              />
-            ))}
-            {/* Emami coin – not in our static list, add if available */}
-            {iranMarket?.sekkeEmami && (
-              <div className="card">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style={{ background: 'rgba(255,170,0,0.12)' }}>🪙</div>
-                    <div>
-                      <div className="text-sm font-semibold text-white">سکه امامی</div>
-                      <div className="text-xs c-muted">Emami Coin</div>
-                    </div>
+      <section>
+        <SectionHeader
+          title="سکه‌های طلا"
+          subtitle={liveUsd ? 'قیمت بازار · brsapi.ir' : 'ارزش ذاتی'}
+          icon="🪙"
+        />
+        <div className="price-grid">
+          {goldCoins.map(coin => (
+            <GoldCoinCard
+              key={coin.id}
+              coin={coin}
+              goldPerGramUSD={goldPerGram}
+              usdToToman={effectiveUsd}
+              marketPriceToman={coinPrices[coin.id]}
+            />
+          ))}
+          {/* Emami coin – not in our static list, add if available */}
+          {iranMarket?.sekkeEmami && (
+            <div className="card">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style={{ background: 'rgba(255,170,0,0.12)' }}>🪙</div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">سکه امامی</div>
+                    <div className="text-xs c-muted">Emami Coin</div>
                   </div>
-                  <span className="text-xs px-2 py-0.5 rounded-lg font-semibold" style={{ background: 'rgba(0,204,136,0.1)', color: '#00cc88', border: '1px solid rgba(0,204,136,0.2)' }}>بازار</span>
                 </div>
-                <div className="text-xl font-bold c-gold mb-0.5">
-                  {formatCompactToman(iranMarket.sekkeEmami)} تومان
-                </div>
+                <span className="text-xs px-2 py-0.5 rounded-lg font-semibold" style={{ background: 'rgba(0,204,136,0.1)', color: '#00cc88', border: '1px solid rgba(0,204,136,0.2)' }}>بازار</span>
               </div>
-            )}
-          </div>
-        </section>
-      )}
+              <div className="text-xl font-bold c-gold mb-0.5">
+                {formatCompactToman(iranMarket.sekkeEmami)} تومان
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Currencies */}
       <section>
