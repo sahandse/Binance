@@ -5,9 +5,11 @@ import { useGlobalData } from '../hooks/useGlobalData'
 import { usePortfolio } from '../hooks/usePortfolio'
 import { useFavorites } from '../hooks/useFavorites'
 import { usePriceAlerts } from '../hooks/usePriceAlerts'
+import { useIranMarket } from '../hooks/useIranMarket'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { DEFAULT_USD_TO_TOMAN } from '../constants/market'
 import type { TabId } from '../types'
+import type { IranMarketData } from '../api/brsapi'
 
 interface AppContextValue {
   // Navigation
@@ -52,6 +54,10 @@ interface AppContextValue {
   triggeredAlerts: ReturnType<typeof usePriceAlerts>['triggered']
   clearTriggeredAlerts: ReturnType<typeof usePriceAlerts>['clearTriggered']
 
+  // Iran market (BRS API – live bazaar prices, Iran-IP only)
+  iranMarket: IranMarketData | null
+  iranMarketLoading: boolean
+
   // Settings
   usdToToman: number
   setUsdToToman: (rate: number) => void
@@ -66,6 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const marketData = useMarketData()
   const { klines, klinesLoading } = useKlines()
   const { globalData, fearGreed, globalLoading } = useGlobalData()
+  const { iranMarket, iranMarketLoading } = useIranMarket()
   const { portfolio, add: addToPortfolio, remove: removeFromPortfolio, update: updatePortfolio } = usePortfolio()
   const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites()
   const {
@@ -97,6 +104,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     removeAlert,
     triggeredAlerts,
     clearTriggeredAlerts,
+    iranMarket,
+    iranMarketLoading,
     usdToToman,
     setUsdToToman,
   }
