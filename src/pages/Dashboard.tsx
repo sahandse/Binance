@@ -3,32 +3,91 @@ import { FearGreedWidget } from '../components/FearGreedWidget'
 import { CryptoCard, CryptoCardSkeleton } from '../components/CryptoCard'
 import { MetalCard, MetalCardSkeleton } from '../components/MetalCard'
 import { SectionHeader } from '../components/SectionHeader'
-import { toPersianDigits, formatMarketCap, formatUSD, formatChange, formatToman } from '../utils/format'
+import { toPersianDigits, formatMarketCap, formatUSD, formatChange, formatCompactToman } from '../utils/format'
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function PriceRow({
+  icon, label, sub, value, unit = 'تومان', last = false,
+}: {
+  icon: string; label: string; sub?: string; value: number | null; unit?: string; last?: boolean
+}) {
+  return (
+    <div
+      className="flex items-center justify-between px-4 py-3"
+      style={last ? {} : { borderBottom: '1px solid #1a1a1f' }}
+    >
+      <div className="flex items-center gap-2.5">
+        <span className="text-lg">{icon}</span>
+        <div>
+          <div className="text-sm text-white">{label}</div>
+          {sub && <div className="text-xs c-muted">{sub}</div>}
+        </div>
+      </div>
+      <div className="text-right">
+        {value != null ? (
+          <div className="text-sm font-bold c-gold">
+            {toPersianDigits(value.toLocaleString('en-US'))} {unit}
+          </div>
+        ) : (
+          <div className="h-4 w-24 rounded-md" style={{ background: '#1f1f24' }} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CompactPriceRow({
+  icon, label, value, last = false,
+}: {
+  icon: string; label: string; value: number | null; last?: boolean
+}) {
+  return (
+    <div
+      className="flex items-center justify-between px-4 py-3"
+      style={last ? {} : { borderBottom: '1px solid #1a1a1f' }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-base">{icon}</span>
+        <span className="text-sm text-white">{label}</span>
+      </div>
+      {value != null ? (
+        <span className="text-sm font-bold c-gold">
+          {formatCompactToman(value)} تومان
+        </span>
+      ) : (
+        <div className="h-4 w-28 rounded-md" style={{ background: '#1f1f24' }} />
+      )}
+    </div>
+  )
+}
+
+// ─── component ──────────────────────────────────────────────────────────────
 
 export function Dashboard() {
   const {
     cryptos, metals, loading, cryptoError,
     globalData, fearGreed, globalLoading,
     klines, usdToToman,
+    iranMarket,
     toggleFavorite, isFavorite,
   } = useApp()
 
-  // Top 2 movers (by absolute change)
+  const liveUsd = iranMarket?.usdToToman ?? null
+
+  // Top 4 movers (by absolute change)
   const topMovers = [...cryptos]
     .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
     .slice(0, 4)
 
-  // BTC + ETH featured
   const btc = cryptos.find(c => c.symbol === 'BTC')
   const eth = cryptos.find(c => c.symbol === 'ETH')
   const featuredCryptos = [btc, eth].filter(Boolean) as typeof cryptos
 
-  const gold = metals.find(m => m.symbol === 'XAU')
-  const goldPerGram = gold ? gold.price / 31.1035 : null
-
   return (
     <div className="page-content space-y-6">
-      {/* Global stats bar */}
+
+      {/* ── Global stats bar ────────────────────────────────────── */}
       {!globalLoading && globalData && (
         <div
           className="rounded-2xl p-4 grid grid-cols-3 gap-3 text-center"
@@ -51,58 +110,68 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Fear & Greed + Gold summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FearGreedWidget data={fearGreed} loading={globalLoading} />
-
-        {/* Gold & USD summary card */}
-        <div className="card space-y-3">
-          <div className="text-xs c-muted font-semibold mb-2">خلاصه بازار</div>
-
-          {/* USD / Toman */}
-          <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid #1f1f24' }}>
-            <div className="flex items-center gap-2">
-              <span className="text-base">🇺🇸</span>
-              <span className="text-sm text-white">دلار آمریکا</span>
+      {/* ── Live USD banner (when BRS data available) ───────────── */}
+      {liveUsd && (
+        <div
+          className="rounded-2xl px-4 py-3 flex items-center justify-between"
+          style={{ background: 'rgba(0,204,136,0.06)', border: '1px solid rgba(0,204,136,0.2)' }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-2 h-2 rounded-full" style={{ background: '#00cc88' }} />
+            <div>
+              <div className="text-xs font-semibold" style={{ color: '#00cc88' }}>قیمت زنده بازار آزاد</div>
+              <div className="text-xs c-muted">brsapi.ir · tgju.org</div>
             </div>
-            <span className="text-sm font-bold c-gold">
-              {toPersianDigits(usdToToman.toLocaleString('en-US'))} تومان
-            </span>
           </div>
-
-          {/* Gold */}
-          {gold && (
-            <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid #1f1f24' }}>
-              <div className="flex items-center gap-2">
-                <span className="text-base">🪙</span>
-                <div>
-                  <div className="text-sm text-white">طلا (هر اونس)</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-bold text-white" dir="ltr">{formatUSD(gold.price)}</div>
-                <div className="text-xs c-gold">{formatToman(gold.price, usdToToman)} تومان</div>
-              </div>
+          <div className="text-right">
+            <div className="text-sm font-bold text-white">
+              {toPersianDigits(liveUsd.toLocaleString('en-US'))} تومان
             </div>
-          )}
-
-          {/* Gold per gram */}
-          {goldPerGram != null && (
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-base">✨</span>
-                <span className="text-sm text-white">طلا (هر گرم)</span>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-bold text-white" dir="ltr">{formatUSD(goldPerGram)}</div>
-                <div className="text-xs c-gold">{formatToman(goldPerGram, usdToToman)} تومان</div>
-              </div>
-            </div>
-          )}
+            <div className="text-xs c-muted">نرخ دلار بازار</div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Featured: BTC + ETH */}
+      {/* ── Currencies ──────────────────────────────────────────── */}
+      <section>
+        <SectionHeader title="نرخ ارز" subtitle="brsapi.ir · tgju.org · بازار آزاد" icon="💱" />
+        <div className="card p-0 overflow-hidden">
+          <PriceRow icon="🇺🇸" label="دلار آمریکا"  value={iranMarket?.usdToToman ?? null} />
+          <PriceRow icon="🇪🇺" label="یورو"          value={iranMarket?.eurToToman ?? null} />
+          <PriceRow icon="🇬🇧" label="پوند انگلیس"  value={iranMarket?.gbpToToman ?? null} />
+          <PriceRow icon="🇦🇪" label="درهم امارات"  value={iranMarket?.aedToToman ?? null} last />
+        </div>
+      </section>
+
+      {/* ── Gold prices ──────────────────────────────────────────── */}
+      <section>
+        <SectionHeader title="قیمت طلا" subtitle="brsapi.ir · تومان · هر گرم" icon="✨" />
+        <div className="card p-0 overflow-hidden">
+          <CompactPriceRow icon="🥇" label="طلای ۱۸ عیار"  value={iranMarket?.gold18PerGram ?? null} />
+          <CompactPriceRow icon="🥇" label="طلای ۲۴ عیار"  value={iranMarket?.gold24PerGram ?? null} />
+          {(iranMarket?.goldMeltedPerGram ?? null) !== null && (
+            <CompactPriceRow icon="💧" label="طلای آب شده"  value={iranMarket!.goldMeltedPerGram} />
+          )}
+          <CompactPriceRow icon="⚖️" label="مثقال طلا" value={iranMarket?.goldMithqal ?? null} last />
+        </div>
+      </section>
+
+      {/* ── Coins ────────────────────────────────────────────────── */}
+      <section>
+        <SectionHeader title="سکه‌های طلا" subtitle="brsapi.ir · قیمت بازار" icon="🪙" />
+        <div className="card p-0 overflow-hidden">
+          <CompactPriceRow icon="🪙" label="سکه تمام بهار آزادی" value={iranMarket?.sekkeTama    ?? null} />
+          <CompactPriceRow icon="🪙" label="نیم سکه"              value={iranMarket?.sekkeNim     ?? null} />
+          <CompactPriceRow icon="🪙" label="ربع سکه"              value={iranMarket?.sekkeRob     ?? null} />
+          <CompactPriceRow icon="🪙" label="سکه گرمی"             value={iranMarket?.sekkeGerami  ?? null} />
+          <CompactPriceRow icon="🪙" label="سکه امامی"            value={iranMarket?.sekkeEmami   ?? null} last />
+        </div>
+      </section>
+
+      {/* ── Fear & Greed ─────────────────────────────────────────── */}
+      <FearGreedWidget data={fearGreed} loading={globalLoading} />
+
+      {/* ── Featured: BTC + ETH ──────────────────────────────────── */}
       <section>
         <SectionHeader title="ارزهای برتر" subtitle="بیت‌کوین و اتریوم" icon="₿" error={cryptoError} />
         <div className="price-grid">
@@ -112,7 +181,7 @@ export function Dashboard() {
                 <CryptoCard
                   key={c.symbol}
                   crypto={c}
-                  usdToToman={usdToToman}
+                  usdToToman={liveUsd ?? usdToToman}
                   klineData={klines[c.symbol]}
                   isFavorite={isFavorite(c.symbol)}
                   onToggleFavorite={toggleFavorite}
@@ -122,7 +191,7 @@ export function Dashboard() {
         </div>
       </section>
 
-      {/* Top Movers */}
+      {/* ── Top Movers ───────────────────────────────────────────── */}
       {topMovers.length > 0 && (
         <section>
           <SectionHeader title="بیشترین تغییر ۲۴ساعت" icon="📈" />
@@ -155,16 +224,17 @@ export function Dashboard() {
         </section>
       )}
 
-      {/* Metals summary */}
+      {/* ── Metals (XAU / XAG) ──────────────────────────────────── */}
       <section>
-        <SectionHeader title="فلزات گرانبها" subtitle="Kraken" icon="🏅" />
+        <SectionHeader title="فلزات گرانبها" subtitle="Frankfurter.app · قیمت جهانی" icon="🏅" />
         <div className="price-grid">
           {loading && metals.length === 0
             ? Array.from({ length: 2 }).map((_, i) => <MetalCardSkeleton key={i} />)
-            : metals.map(m => <MetalCard key={m.symbol} metal={m} usdToToman={usdToToman} />)
+            : metals.map(m => <MetalCard key={m.symbol} metal={m} usdToToman={liveUsd ?? usdToToman} />)
           }
         </div>
       </section>
+
     </div>
   )
 }
