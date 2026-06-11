@@ -5,7 +5,7 @@ import { CryptoListItem } from '../components/CryptoListItem'
 import { CryptoCardSkeleton } from '../components/CryptoCard'
 
 export function CryptoPage() {
-  const { cryptos, loading, klines, usdToToman, toggleFavorite, isFavorite, favorites } = useApp()
+  const { cryptos, loading, klines, usdToToman, toggleFavorite, isFavorite, favorites, iranMarket } = useApp()
 
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<'price' | 'change' | 'volume'>('volume')
@@ -82,6 +82,7 @@ export function CryptoPage() {
               isFavorite={isFavorite(c.symbol)}
               onToggleFavorite={toggleFavorite}
               rank={i + 1}
+              marketPriceToman={iranMarket?.cryptoToman[c.symbol] ?? null}
             />
           ))
         )}
