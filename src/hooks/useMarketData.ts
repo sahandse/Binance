@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { MarketData } from '../types'
+import type { MarketData, KlineData } from '../types'
+import { fetchCoinMarkets } from '../api/coingecko'
 import { fetchBinancePrices } from '../api/binance'
 import { fetchFrankfurterRates, fetchMetals } from '../api/frankfurter'
 import { fetchExtraRates } from '../api/exchangerate'
@@ -18,36 +19,58 @@ const initialState: MarketData = {
 
 export function useMarketData() {
   const [data, setData] = useState<MarketData>(initialState)
+  const [klines, setKlines] = useState<Record<string, KlineData>>({})
   const isMountedRef = useRef(true)
 
   const fetchAll = useCallback(async () => {
     const results = await Promise.allSettled([
-      fetchBinancePrices(),
-      fetchMetals(),
-      fetchFrankfurterRates(),
-      fetchExtraRates(),
+      fetchCoinMarkets(),          // CoinGecko: prices + sparklines
+      fetchMetals(),               // Frankfurter: XAU/XAG
+      fetchFrankfurterRates(),     // Frankfurter: EUR/GBP/…
+      fetchExtraRates(),           // ExchangeRate.host: AED/TRY
     ])
 
     if (!isMountedRef.current) return
 
-    const [cryptoResult, metalResult, currencyResult, extraResult] = results
+    const [cgResult, metalResult, currencyResult, extraResult] = results
+
+    // Crypto: CoinGecko primary, Binance fallback
+    let cryptos = data.cryptos
+    let newKlines = klines
+    let cryptoError: string | null = null
+
+    if (cgResult.status === 'fulfilled') {
+      cryptos = cgResult.value.cryptos
+      newKlines = cgResult.value.klines
+    } else {
+      cryptoError = 'خطا در دریافت قیمت‌ها'
+      // Fallback to Binance
+      try {
+        cryptos = await fetchBinancePrices()
+      } catch {
+        // keep previous cryptos
+      }
+    }
 
     const currencies = [
       ...(currencyResult.status === 'fulfilled' ? currencyResult.value : []),
       ...(extraResult.status === 'fulfilled' ? extraResult.value : []),
     ]
 
-    setData(prev => ({
-      cryptos: cryptoResult.status === 'fulfilled' ? cryptoResult.value : prev.cryptos,
-      metals: metalResult.status === 'fulfilled' ? metalResult.value : prev.metals,
-      currencies: currencies.length > 0 ? currencies : prev.currencies,
-      lastUpdate: new Date(),
-      loading: false,
-      cryptoError: cryptoResult.status === 'rejected' ? 'خطا در دریافت قیمت رمزارزها' : null,
-      metalError: metalResult.status === 'rejected' ? 'خطا در دریافت قیمت فلزات' : null,
-      currencyError: currencyResult.status === 'rejected' ? 'خطا در دریافت نرخ ارزها' : null,
-    }))
-  }, [])
+    if (isMountedRef.current) {
+      setKlines(newKlines)
+      setData(prev => ({
+        cryptos,
+        metals: metalResult.status === 'fulfilled' ? metalResult.value : prev.metals,
+        currencies: currencies.length > 0 ? currencies : prev.currencies,
+        lastUpdate: new Date(),
+        loading: false,
+        cryptoError,
+        metalError: metalResult.status === 'rejected' ? 'خطا در دریافت قیمت فلزات' : null,
+        currencyError: currencyResult.status === 'rejected' ? 'خطا در دریافت نرخ ارزها' : null,
+      }))
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     isMountedRef.current = true
@@ -67,5 +90,5 @@ export function useMarketData() {
     }
   }, [fetchAll])
 
-  return { ...data, refresh: fetchAll }
+  return { ...data, klines, refresh: fetchAll }
 }

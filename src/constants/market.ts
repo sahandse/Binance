@@ -50,6 +50,27 @@ export const CURRENCY_META: Record<string, { nameFA: string; flag: string }> = {
 export const FRANKFURTER_CURRENCIES = ['EUR', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'CNY']
 export const OPEN_ER_CURRENCIES = ['AED', 'TRY']
 
+// CoinGecko coin IDs (symbol → CG id)
+export const CG_COIN_IDS: Record<string, string> = {
+  BTC:  'bitcoin',
+  ETH:  'ethereum',
+  BNB:  'binancecoin',
+  SOL:  'solana',
+  XRP:  'ripple',
+  DOGE: 'dogecoin',
+  ADA:  'cardano',
+  AVAX: 'avalanche-2',
+  DOT:  'polkadot',
+  TON:  'the-open-network',
+  LINK: 'chainlink',
+  MATIC:'matic-network',
+  UNI:  'uniswap',
+  LTC:  'litecoin',
+  ATOM: 'cosmos',
+}
+
+export const CG_API_KEY = 'CG-wXJ3TNn9T93qohqWjVMT4QBf'
+
 export const DEFAULT_USD_TO_TOMAN = 87000
 export const REFRESH_INTERVAL_MS = 30000
 export const SLOW_REFRESH_MS = 300000 // 5 min

@@ -66,6 +66,27 @@ export interface PriceAlert {
   triggered: boolean
 }
 
+export interface DEXPool {
+  id: string
+  name: string
+  network: string
+  priceUSD: number
+  volume24h: number
+  priceChange24h: number
+  fdvUSD: number
+}
+
+export interface NFTCollection {
+  id: string
+  name: string
+  symbol: string
+  floorPriceUSD: number
+  marketCapUSD: number
+  volume24h: number
+  priceChange24h: number
+  nativeCurrency: string
+}
+
 export type TabId = 'home' | 'crypto' | 'gold' | 'portfolio' | 'tools'
 
 export interface MarketData {

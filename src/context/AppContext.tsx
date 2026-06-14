@@ -1,14 +1,14 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import { useMarketData } from '../hooks/useMarketData'
-import { useKlines } from '../hooks/useKlines'
 import { useGlobalData } from '../hooks/useGlobalData'
 import { usePortfolio } from '../hooks/usePortfolio'
 import { useFavorites } from '../hooks/useFavorites'
 import { usePriceAlerts } from '../hooks/usePriceAlerts'
 import { useIranMarket } from '../hooks/useIranMarket'
+import { useDEXNFT } from '../hooks/useDEXNFT'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { DEFAULT_USD_TO_TOMAN } from '../constants/market'
-import type { TabId } from '../types'
+import type { TabId, DEXPool, NFTCollection } from '../types'
 import type { IranMarketData } from '../api/brsapi'
 
 interface AppContextValue {
@@ -27,9 +27,9 @@ interface AppContextValue {
   currencyError: ReturnType<typeof useMarketData>['currencyError']
   refresh: ReturnType<typeof useMarketData>['refresh']
 
-  // Klines
-  klines: ReturnType<typeof useKlines>['klines']
-  klinesLoading: ReturnType<typeof useKlines>['klinesLoading']
+  // Klines (now from CoinGecko sparklines via useMarketData)
+  klines: ReturnType<typeof useMarketData>['klines']
+  klinesLoading: boolean
 
   // Global data
   globalData: ReturnType<typeof useGlobalData>['globalData']
@@ -54,9 +54,15 @@ interface AppContextValue {
   triggeredAlerts: ReturnType<typeof usePriceAlerts>['triggered']
   clearTriggeredAlerts: ReturnType<typeof usePriceAlerts>['clearTriggered']
 
-  // Iran market (BRS API – live bazaar prices, Iran-IP only)
+  // Iran market (BRS API + TGJU – Iran-IP only)
   iranMarket: IranMarketData | null
   iranMarketLoading: boolean
+
+  // CoinGecko DEX + NFT
+  dexPools: DEXPool[]
+  nftCollections: NFTCollection[]
+  dexLoading: boolean
+  nftLoading: boolean
 
   // Settings
   usdToToman: number
@@ -70,9 +76,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [usdToToman, setUsdToToman] = useLocalStorage<number>('bazaar-usd-toman', DEFAULT_USD_TO_TOMAN)
 
   const marketData = useMarketData()
-  const { klines, klinesLoading } = useKlines()
   const { globalData, fearGreed, globalLoading } = useGlobalData()
   const { iranMarket, iranMarketLoading } = useIranMarket()
+  const { dexPools, nftCollections, dexLoading, nftLoading } = useDEXNFT()
   const { portfolio, add: addToPortfolio, remove: removeFromPortfolio, update: updatePortfolio } = usePortfolio()
   const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites()
   const {
@@ -87,8 +93,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     activeTab,
     setActiveTab,
     ...marketData,
-    klines,
-    klinesLoading,
+    // klines come from useMarketData now (CoinGecko sparklines)
+    klinesLoading: marketData.loading,
     globalData,
     fearGreed,
     globalLoading,
@@ -106,6 +112,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     clearTriggeredAlerts,
     iranMarket,
     iranMarketLoading,
+    dexPools,
+    nftCollections,
+    dexLoading,
+    nftLoading,
     usdToToman,
     setUsdToToman,
   }

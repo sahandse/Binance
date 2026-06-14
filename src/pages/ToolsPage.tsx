@@ -4,12 +4,19 @@ import { Calculator } from '../components/Calculator'
 import { AlertItem } from '../components/AlertItem'
 import { TomanRateBar } from '../components/TomanRateBar'
 import { SectionHeader } from '../components/SectionHeader'
-import { formatUSD } from '../utils/format'
+import { formatUSD, formatMarketCap, toPersianDigits } from '../utils/format'
+
+const NETWORK_LABELS: Record<string, string> = {
+  eth: 'Ethereum', bsc: 'BSC', polygon_pos: 'Polygon',
+  solana: 'Solana', arbitrum: 'Arbitrum', base: 'Base',
+  optimism: 'Optimism', avalanche: 'Avalanche',
+}
 
 export function ToolsPage() {
   const {
     cryptos, metals, usdToToman, setUsdToToman,
     alerts, addAlert, removeAlert,
+    dexPools, nftCollections, dexLoading, nftLoading,
   } = useApp()
 
   const [alertSymbol, setAlertSymbol] = useState('')
@@ -62,6 +69,104 @@ export function ToolsPage() {
       <section>
         <SectionHeader title="ماشین‌حساب تومانی" subtitle="تبدیل به تومان" icon="🧮" />
         <Calculator usdToToman={usdToToman} cryptos={cryptos} metals={metals} />
+      </section>
+
+      {/* DEX Trending Pools */}
+      <section>
+        <SectionHeader title="پول‌های داغ DEX" subtitle="CoinGecko Onchain · ۲۴ساعت" icon="🔥" />
+        {dexLoading && dexPools.length === 0 ? (
+          <div className="card p-0 overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex justify-between px-4 py-3" style={{ borderBottom: '1px solid #1a1a1f' }}>
+                <div className="h-4 w-32 rounded-md" style={{ background: '#1f1f24' }} />
+                <div className="h-4 w-24 rounded-md" style={{ background: '#1f1f24' }} />
+              </div>
+            ))}
+          </div>
+        ) : dexPools.length > 0 ? (
+          <div className="card p-0 overflow-hidden">
+            {dexPools.map((pool, i) => {
+              const up = pool.priceChange24h >= 0
+              return (
+                <div
+                  key={pool.id}
+                  className="flex items-center gap-3 px-4 py-3"
+                  style={{ borderBottom: i < dexPools.length - 1 ? '1px solid #1a1a1f' : 'none' }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white truncate">{pool.name}</div>
+                    <div className="text-xs c-muted">{NETWORK_LABELS[pool.network] ?? pool.network}</div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-xs c-muted">حجم ۲۴ساعت</div>
+                    <div className="text-sm font-bold text-white">${formatMarketCap(pool.volume24h)}</div>
+                  </div>
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-lg font-bold flex-shrink-0"
+                    style={{
+                      background: up ? 'rgba(0,204,136,0.1)' : 'rgba(255,68,85,0.1)',
+                      color: up ? '#00cc88' : '#ff4455',
+                    }}
+                  >
+                    {up ? '▲' : '▼'} {toPersianDigits(Math.abs(pool.priceChange24h).toFixed(2))}٪
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="card text-center py-6 c-muted text-sm">داده‌ای در دسترس نیست</div>
+        )}
+      </section>
+
+      {/* NFT Markets */}
+      <section>
+        <SectionHeader title="بازار NFT" subtitle="CoinGecko · برترین مجموعه‌ها" icon="🖼️" />
+        {nftLoading && nftCollections.length === 0 ? (
+          <div className="card p-0 overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex justify-between px-4 py-3" style={{ borderBottom: '1px solid #1a1a1f' }}>
+                <div className="h-4 w-32 rounded-md" style={{ background: '#1f1f24' }} />
+                <div className="h-4 w-24 rounded-md" style={{ background: '#1f1f24' }} />
+              </div>
+            ))}
+          </div>
+        ) : nftCollections.length > 0 ? (
+          <div className="card p-0 overflow-hidden">
+            {nftCollections.map((nft, i) => {
+              const up = nft.priceChange24h >= 0
+              return (
+                <div
+                  key={nft.id}
+                  className="flex items-center gap-3 px-4 py-3"
+                  style={{ borderBottom: i < nftCollections.length - 1 ? '1px solid #1a1a1f' : 'none' }}
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                    style={{ background: '#1e1e26' }}>🖼️</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white truncate">{nft.name}</div>
+                    <div className="text-xs c-muted">{nft.nativeCurrency.toUpperCase()}</div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-sm font-bold text-white">{formatUSD(nft.floorPriceUSD)}</div>
+                    <div className="text-xs c-muted">کف قیمت</div>
+                  </div>
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-lg font-bold flex-shrink-0"
+                    style={{
+                      background: up ? 'rgba(0,204,136,0.1)' : 'rgba(255,68,85,0.1)',
+                      color: up ? '#00cc88' : '#ff4455',
+                    }}
+                  >
+                    {up ? '▲' : '▼'} {toPersianDigits(Math.abs(nft.priceChange24h).toFixed(1))}٪
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="card text-center py-6 c-muted text-sm">داده‌ای در دسترس نیست</div>
+        )}
       </section>
 
       {/* Price Alerts */}
