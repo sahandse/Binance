@@ -17,6 +17,7 @@ export function ToolsPage() {
     cryptos, metals, usdToToman, setUsdToToman,
     alerts, addAlert, removeAlert,
     dexPools, nftCollections, dexLoading, nftLoading,
+    defiProtocols, defiYields, defiLoading,
   } = useApp()
 
   const [alertSymbol, setAlertSymbol] = useState('')
@@ -163,6 +164,98 @@ export function ToolsPage() {
                 </div>
               )
             })}
+          </div>
+        ) : (
+          <div className="card text-center py-6 c-muted text-sm">داده‌ای در دسترس نیست</div>
+        )}
+      </section>
+
+      {/* DeFiLlama Protocols */}
+      <section>
+        <SectionHeader title="برترین پروتکل‌های دیفای" subtitle="DeFiLlama · TVL" icon="🏦" />
+        {defiLoading && defiProtocols.length === 0 ? (
+          <div className="card p-0 overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex justify-between px-4 py-3" style={{ borderBottom: '1px solid #1a1a1f' }}>
+                <div className="h-4 w-32 rounded-md" style={{ background: '#1f1f24' }} />
+                <div className="h-4 w-24 rounded-md" style={{ background: '#1f1f24' }} />
+              </div>
+            ))}
+          </div>
+        ) : defiProtocols.length > 0 ? (
+          <div className="card p-0 overflow-hidden">
+            {defiProtocols.map((p, i) => {
+              const up = p.change24h >= 0
+              return (
+                <div
+                  key={p.slug}
+                  className="flex items-center gap-3 px-4 py-3"
+                  style={{ borderBottom: i < defiProtocols.length - 1 ? '1px solid #1a1a1f' : 'none' }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white truncate">{p.name}</div>
+                    <div className="text-xs c-muted">{p.category} · {p.chain}</div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-xs c-muted">TVL</div>
+                    <div className="text-sm font-bold text-white">${formatMarketCap(p.tvl)}</div>
+                  </div>
+                  {p.change24h !== 0 && (
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-lg font-bold flex-shrink-0"
+                      style={{
+                        background: up ? 'rgba(0,204,136,0.1)' : 'rgba(255,68,85,0.1)',
+                        color: up ? '#00cc88' : '#ff4455',
+                      }}
+                    >
+                      {up ? '▲' : '▼'} {toPersianDigits(Math.abs(p.change24h).toFixed(1))}٪
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="card text-center py-6 c-muted text-sm">داده‌ای در دسترس نیست</div>
+        )}
+      </section>
+
+      {/* DeFiLlama Yields */}
+      <section>
+        <SectionHeader title="بهترین بازدهی‌های دیفای" subtitle="DeFiLlama · APY بالاتر از میانگین" icon="📈" />
+        {defiLoading && defiYields.length === 0 ? (
+          <div className="card p-0 overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex justify-between px-4 py-3" style={{ borderBottom: '1px solid #1a1a1f' }}>
+                <div className="h-4 w-32 rounded-md" style={{ background: '#1f1f24' }} />
+                <div className="h-4 w-24 rounded-md" style={{ background: '#1f1f24' }} />
+              </div>
+            ))}
+          </div>
+        ) : defiYields.length > 0 ? (
+          <div className="card p-0 overflow-hidden">
+            {defiYields.map((y, i) => (
+              <div
+                key={y.pool}
+                className="flex items-center gap-3 px-4 py-3"
+                style={{ borderBottom: i < defiYields.length - 1 ? '1px solid #1a1a1f' : 'none' }}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-white truncate">{y.symbol}</div>
+                  <div className="text-xs c-muted">{y.project} · {y.chain}</div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-xs c-muted">TVL</div>
+                  <div className="text-sm text-white">${formatMarketCap(y.tvlUsd)}</div>
+                </div>
+                <span
+                  className="text-xs px-2 py-0.5 rounded-lg font-bold flex-shrink-0"
+                  style={{ background: 'rgba(0,204,136,0.1)', color: '#00cc88' }}
+                >
+                  {toPersianDigits(y.apy.toFixed(1))}٪
+                </span>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="card text-center py-6 c-muted text-sm">داده‌ای در دسترس نیست</div>

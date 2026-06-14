@@ -70,6 +70,7 @@ export function Dashboard() {
     globalData, fearGreed, globalLoading,
     klines, usdToToman,
     iranMarket,
+    trendingCoins, trendingLoading,
     toggleFavorite, isFavorite,
   } = useApp()
 
@@ -234,6 +235,60 @@ export function Dashboard() {
           }
         </div>
       </section>
+
+      {/* ── Trending Coins ───────────────────────────────────────── */}
+      {(trendingLoading || trendingCoins.length > 0) && (
+        <section>
+          <SectionHeader title="ترندهای روز" subtitle="CoinGecko · داغ‌ترین رمزارزها" icon="🔥" />
+          <div className="card p-0 overflow-hidden">
+            {trendingLoading && trendingCoins.length === 0
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex justify-between px-4 py-3" style={{ borderBottom: '1px solid #1a1a1f' }}>
+                    <div className="h-4 w-28 rounded-md" style={{ background: '#1f1f24' }} />
+                    <div className="h-4 w-20 rounded-md" style={{ background: '#1f1f24' }} />
+                  </div>
+                ))
+              : trendingCoins.map((coin, i) => {
+                  const up = coin.change24h >= 0
+                  return (
+                    <div
+                      key={coin.id}
+                      className="flex items-center gap-3 px-4 py-3"
+                      style={{ borderBottom: i < trendingCoins.length - 1 ? '1px solid #1a1a1f' : 'none' }}
+                    >
+                      {coin.rank > 0 && (
+                        <div
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0"
+                          style={{ background: '#1e1e26', color: '#aaa' }}
+                        >
+                          {coin.rank}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-white">{coin.name}</div>
+                        <div className="text-xs c-muted">{coin.symbol}</div>
+                      </div>
+                      {coin.priceUSD > 0 && (
+                        <div className="text-sm font-bold text-white tabular-nums" dir="ltr">
+                          {formatUSD(coin.priceUSD)}
+                        </div>
+                      )}
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-lg font-bold flex-shrink-0"
+                        style={{
+                          background: up ? 'rgba(0,204,136,0.1)' : 'rgba(255,68,85,0.1)',
+                          color: up ? '#00cc88' : '#ff4455',
+                        }}
+                      >
+                        {up ? '▲' : '▼'} {toPersianDigits(Math.abs(coin.change24h).toFixed(1))}٪
+                      </span>
+                    </div>
+                  )
+                })
+            }
+          </div>
+        </section>
+      )}
 
     </div>
   )

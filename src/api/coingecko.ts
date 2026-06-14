@@ -1,4 +1,4 @@
-import type { GlobalMarketData, CryptoPrice, KlineData, DEXPool, NFTCollection } from '../types'
+import type { GlobalMarketData, CryptoPrice, KlineData, DEXPool, NFTCollection, TrendingCoin } from '../types'
 import { CG_COIN_IDS, CG_API_KEY, COIN_META } from '../constants/market'
 
 const BASE = 'https://api.coingecko.com/api/v3'
@@ -145,5 +145,35 @@ export async function fetchTrendingNFTs(): Promise<NFTCollection[]> {
     volume24h: n.volume_24h_usd ?? 0,
     priceChange24h: n.floor_price_24h_percentage_change ?? 0,
     nativeCurrency: n.native_currency ?? 'eth',
+  }))
+}
+
+// ─── Trending coins ──────────────────────────────────────────────────────────
+
+interface RawTrendingItem {
+  item: {
+    id: string
+    symbol: string
+    name: string
+    market_cap_rank?: number
+    data?: {
+      price?: number
+      price_change_percentage_24h?: { usd?: number }
+    }
+  }
+}
+
+export async function fetchTrending(): Promise<TrendingCoin[]> {
+  const res = await cgFetch('/search/trending')
+  if (!res.ok) throw new Error(`CoinGecko trending HTTP ${res.status}`)
+  const json = await res.json()
+  const coins: RawTrendingItem[] = json.coins ?? []
+  return coins.slice(0, 10).map(({ item }) => ({
+    id: item.id,
+    symbol: item.symbol.toUpperCase(),
+    name: item.name,
+    priceUSD: item.data?.price ?? 0,
+    change24h: item.data?.price_change_percentage_24h?.usd ?? 0,
+    rank: item.market_cap_rank ?? 0,
   }))
 }

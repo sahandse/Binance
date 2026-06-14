@@ -6,9 +6,11 @@ import { useFavorites } from '../hooks/useFavorites'
 import { usePriceAlerts } from '../hooks/usePriceAlerts'
 import { useIranMarket } from '../hooks/useIranMarket'
 import { useDEXNFT } from '../hooks/useDEXNFT'
+import { useDefiData } from '../hooks/useDefiData'
+import { useTrending } from '../hooks/useTrending'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { DEFAULT_USD_TO_TOMAN } from '../constants/market'
-import type { TabId, DEXPool, NFTCollection } from '../types'
+import type { TabId, DEXPool, NFTCollection, DefiProtocol, DefiYield, TrendingCoin } from '../types'
 import type { IranMarketData } from '../api/brsapi'
 
 interface AppContextValue {
@@ -64,6 +66,15 @@ interface AppContextValue {
   dexLoading: boolean
   nftLoading: boolean
 
+  // DeFiLlama
+  defiProtocols: DefiProtocol[]
+  defiYields: DefiYield[]
+  defiLoading: boolean
+
+  // CoinGecko trending
+  trendingCoins: TrendingCoin[]
+  trendingLoading: boolean
+
   // Settings
   usdToToman: number
   setUsdToToman: (rate: number) => void
@@ -79,6 +90,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { globalData, fearGreed, globalLoading } = useGlobalData()
   const { iranMarket, iranMarketLoading } = useIranMarket()
   const { dexPools, nftCollections, dexLoading, nftLoading } = useDEXNFT()
+  const { protocols: defiProtocols, yields: defiYields, defiLoading } = useDefiData()
+  const { trendingCoins, trendingLoading } = useTrending()
   const { portfolio, add: addToPortfolio, remove: removeFromPortfolio, update: updatePortfolio } = usePortfolio()
   const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites()
   const {
@@ -116,6 +129,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     nftCollections,
     dexLoading,
     nftLoading,
+    defiProtocols,
+    defiYields,
+    defiLoading,
+    trendingCoins,
+    trendingLoading,
     usdToToman,
     setUsdToToman,
   }

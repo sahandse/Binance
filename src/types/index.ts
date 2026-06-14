@@ -87,6 +87,33 @@ export interface NFTCollection {
   nativeCurrency: string
 }
 
+export interface DefiProtocol {
+  name: string
+  slug: string
+  tvl: number
+  change24h: number
+  category: string
+  chain: string
+}
+
+export interface DefiYield {
+  pool: string
+  project: string
+  chain: string
+  symbol: string
+  apy: number
+  tvlUsd: number
+}
+
+export interface TrendingCoin {
+  id: string
+  symbol: string
+  name: string
+  priceUSD: number
+  change24h: number
+  rank: number
+}
+
 export type TabId = 'home' | 'crypto' | 'gold' | 'portfolio' | 'tools'
 
 export interface MarketData {
